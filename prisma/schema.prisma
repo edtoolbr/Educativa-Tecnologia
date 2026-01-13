@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionStatus {
+  PENDING
+  PROCESSING
+  DONE
+  CANCELLED
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  name         String?
+  passwordHash String?
+  createdAt    DateTime  @default(now())
+  sessions     Session[]
+}
+
+model Session {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  title      String
+  status     SessionStatus @default(PENDING)
+  createdAt  DateTime  @default(now())
+  recordings Recording[]
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Recording {
+  id         Int      @id @default(autoincrement())
+  sessionId  Int
+  s3Key      String
+  lengthMs   Int?
+  processed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  score      Score?
+
+  session Session @relation(fields: [sessionId], references: [id])
+}
+
+model Score {
+  id          Int      @id @default(autoincrement())
+  recordingId Int      @unique
+  wordsCorrect Int
+  totalWords   Int
+  fluency      Float
+  createdAt    DateTime @default(now())
+
+  recording Recording @relation(fields: [recordingId], references: [id])
+}
