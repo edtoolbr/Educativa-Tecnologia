@@ -49,7 +49,11 @@ router.post("/:id/recordings", async (req, res) => {
     const sessionId = Number(req.params.id);
     const { filename, contentType } = req.body;
 
+    if (Number.isNaN(sessionId)) return res.status(400).json({ error: "invalid session id" });
     if (!filename) return res.status(400).json({ error: "filename is required" });
+
+    const session = await prisma.session.findUnique({ where: { id: sessionId }, select: { id: true } });
+    if (!session) return res.status(404).json({ error: "session not found" });
 
     // create DB entry first
     const s3Key = `recordings/session_${sessionId}/${Date.now()}_${filename}`;
